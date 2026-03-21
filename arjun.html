@@ -381,21 +381,24 @@
         <div class="contact-item"><i class="fas fa-map-marker-alt"></i><span>Bengaluru, Karnataka, India</span></div>
       </div>
       <div class="card" style="margin-bottom:0;">
-        <form class="contact-form" id="contactForm">
-          <div class="input-group">
-            <label><i class="fas fa-user"></i> Your Name</label>
-            <input type="text" placeholder="e.g. Ravi Kumar" required>
-          </div>
-          <div class="input-group">
-            <label><i class="fas fa-envelope"></i> Email Address</label>
-            <input type="email" placeholder="ravi@example.com" required>
-          </div>
-          <div class="input-group">
-            <label><i class="fas fa-comment"></i> Message</label>
-            <textarea rows="4" placeholder="Let's talk cloud..." required></textarea>
-          </div>
-          <button type="submit" class="submit-btn"><i class="fab fa-telegram-plane"></i> Send Message</button>
-        </form>
+       <form class="contact-form" id="contactForm">
+  <div class="input-group">
+    <label for="name"><i class="fas fa-user"></i> Your Name</label>
+    <input type="text" id="name" placeholder="e.g. Ravi Kumar" required>
+  </div>
+  <div class="input-group">
+    <label for="email"><i class="fas fa-envelope"></i> Your Email</label>
+    <input type="email" id="email" placeholder="ravi@example.com" required>
+  </div>
+  <div class="input-group">
+    <label for="message"><i class="fas fa-comment-dots"></i> Message</label>
+    <textarea id="message" rows="4" placeholder="Let's talk cloud..." required></textarea>
+  </div>
+  <div id="formStatus" class="form-status"></div>
+  <button type="submit" class="submit-btn" id="submitBtn">
+    <i class="fas fa-paper-plane"></i> Send Message
+  </button>
+</form>
       </div>
     </div>
   </section>
@@ -438,22 +441,7 @@
     });
 
     // FORM
-    document.getElementById("contactForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const btn = e.target.querySelector(".submit-btn");
-      const original = btn.innerHTML;
-      btn.innerHTML = "<i class='fas fa-check'></i> Sent successfully!";
-      btn.style.background = "#22c55e";
-      btn.style.color = "#fff";
-      setTimeout(() => {
-        btn.innerHTML = original;
-        btn.style.background = "";
-        btn.style.color = "";
-        e.target.reset();
-      }, 3000);
-    });
-
-    // SCROLL REVEAL
+   
     const observer = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
     }, { threshold: 0.12 });
@@ -476,5 +464,38 @@
       });
     });
   </script>
+<script type="module">
+  import { ConvexHttpClient } from "https://esm.sh/convex@1.13.0/browser";
+
+  const client = new ConvexHttpClient("https://precise-pig-194.convex.cloud");
+  const form = document.getElementById("contactForm");
+  const btn  = document.getElementById("submitBtn");
+  const status = document.getElementById("formStatus");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name    = document.getElementById("name").value.trim();
+    const email   = document.getElementById("email").value.trim();
+    const message = document.getElementById("message").value.trim();
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    try {
+      const id = await client.mutation("contact:sendMessage", { name, email, message });
+      console.log("✅ Stored:", id);
+      status.textContent = "✅ Message sent!";
+      status.className = "form-status success";
+      form.reset();
+    } catch (err) {
+      console.error("❌ Failed:", err);
+      status.textContent = "❌ Error: " + err.message;
+      status.className = "form-status error";
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+    }
+  });
+</script>
 </body>
 </html>
